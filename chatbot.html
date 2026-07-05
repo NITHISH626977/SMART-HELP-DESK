@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Helpdesk — SmartCampus</title>
+  <meta name="description" content="Chat with your SmartCampus AI assistant for instant help on attendance, marks, fees, placements, library and more.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Chat layout */
+    .chat-area {
+      display:flex;flex-direction:column;height:calc(100vh - 64px);
+      max-height:calc(100vh - 64px);
+    }
+    .questions-panel {
+      flex-shrink:0;margin-bottom:16px;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);padding:0;overflow:hidden;box-shadow:var(--shadow);
+    }
+    .qp-header {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 18px;cursor:pointer;user-select:none;
+      border-bottom:1px solid transparent;transition:border-color 0.3s;
+    }
+    .qp-header.open { border-bottom-color:var(--border); }
+    .qp-header h3 { font-size:0.92rem;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--primary);margin:0; }
+    .qp-arrow { font-size:0.82rem;color:var(--text-muted);transition:transform 0.3s; }
+    .qp-arrow.open { transform:rotate(180deg); }
+    .qp-body { max-height:0;overflow:hidden;transition:max-height 0.4s ease; padding:0 18px; }
+    .qp-body.open { max-height:500px;padding:14px 18px; }
+    .q-category { margin-bottom:14px; }
+    .q-cat-label {
+      font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;
+      color:var(--text-muted);margin-bottom:7px;
+    }
+    .q-chips { display:flex;flex-wrap:wrap;gap:7px; }
+    .q-chip {
+      display:inline-flex;align-items:center;gap:5px;
+      padding:6px 13px;border-radius:20px;cursor:pointer;
+      background:rgba(var(--shadow-color),0.08);border:1px solid rgba(var(--shadow-color),0.2);
+      font-size:0.78rem;font-weight:500;color:var(--primary);
+      transition:all 0.2s;white-space:nowrap;
+    }
+    .q-chip:hover { background:rgba(var(--shadow-color),0.18);transform:translateY(-1px);box-shadow:0 4px 12px rgba(var(--shadow-color),0.18); }
+
+    /* Chat container */
+    .chat-container {
+      flex:1;min-height:0;display:flex;flex-direction:column;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
+    }
+    .chat-history {
+      flex:1;overflow-y:auto;padding:20px;
+      display:flex;flex-direction:column;gap:14px;
+    }
+    .chat-msg {
+      max-width:75%;padding:12px 16px;border-radius:16px;line-height:1.6;
+      font-size:0.9rem;animation:fadeInUp 0.25s ease;
+    }
+    .chat-msg.bot {
+      align-self:flex-start;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-bottom-left-radius:4px;white-space:pre-wrap;
+    }
+    .chat-msg.user {
+      align-self:flex-end;color:#fff;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      border-bottom-right-radius:4px;
+    }
+    .msg-time { font-size:0.68rem;color:var(--text-muted);margin-top:4px;display:block; }
+    .msg-avatar {
+      width:30px;height:30px;border-radius:10px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.75rem;font-weight:700;color:#fff;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+    }
+    .msg-row { display:flex;align-items:flex-end;gap:9px; }
+    .msg-row.user-row { flex-direction:row-reverse; }
+    .msg-row.user-row .msg-avatar { background:linear-gradient(135deg,var(--info),var(--primary)); }
+
+    /* Typing indicator */
+    .typing-indicator {
+      align-self:flex-start;padding:12px 18px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:16px;border-bottom-left-radius:4px;
+      display:none;
+    }
+    .typing-dots { display:flex;gap:5px;align-items:center; }
+    .typing-dot {
+      width:8px;height:8px;border-radius:50%;
+      background:var(--primary);opacity:0.5;
+      animation:typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2){animation-delay:0.2s}
+    .typing-dot:nth-child(3){animation-delay:0.4s}
+    @keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:0.5} 30%{transform:translateY(-8px);opacity:1} }
+
+    /* Input area */
+    .chat-input-row {
+      display:flex;align-items:center;gap:10px;
+      padding:14px 16px;border-top:1px solid var(--border);
+      background:var(--surface);
+    }
+    .chat-input {
+      flex:1;padding:11px 18px;border-radius:25px;
+      background:var(--bg);border:1.5px solid var(--border);
+      color:var(--text);font-family:inherit;font-size:0.9rem;outline:none;
+      transition:border-color 0.2s,box-shadow 0.2s;
+    }
+    .chat-input::placeholder { color:var(--text-muted); }
+    .chat-input:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--shadow-color),0.12); }
+    .send-btn {
+      width:42px;height:42px;border-radius:12px;border:none;cursor:pointer;
+      background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;
+      font-size:0.95rem;display:flex;align-items:center;justify-content:center;
+      transition:all 0.2s;flex-shrink:0;
+      box-shadow:0 4px 12px rgba(var(--shadow-color),0.3);
+    }
+    .send-btn:hover { transform:translateY(-2px);box-shadow:0 8px 20px rgba(var(--shadow-color),0.45); }
+    .clear-btn {
+      width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);
+      background:none;color:var(--text-muted);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:0.85rem;
+      transition:all 0.2s;flex-shrink:0;
+    }
+    .clear-btn:hover { border-color:var(--danger);color:var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+        <div><div class="sidebar-brand-text">SmartCampus</div><div class="sidebar-brand-sub">AI Helpdesk</div></div>
+      </div>
+      <nav class="sidebar-nav">
+        <span class="sidebar-section-label">Navigation</span>
+        <a class="sidebar-link" href="dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+        <a class="sidebar-link" href="chatbot.html"><i class="fas fa-robot"></i><span>AI Helpdesk</span></a>
+        <a class="sidebar-link" href="library.html"><i class="fas fa-book-open"></i><span>Library</span></a>
+        <a class="sidebar-link" href="placements.html"><i class="fas fa-briefcase"></i><span>Placements</span></a>
+        <a class="sidebar-link" href="events.html"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+          <div class="avatar" id="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.85rem;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-weight:700;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;"><div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div><div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);"></div></div>
+        </div>
+        <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;"><i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span></button>
+        <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content" style="display:flex;flex-direction:column;height:100vh;padding:24px;">
+      <div class="page-header" style="margin-bottom:18px;flex-shrink:0">
+        <div class="page-header-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-robot"></i></div>
+        <div><h1 style="font-size:1.5rem">AI Helpdesk</h1><p>Ask anything about your campus life</p></div>
+      </div>
+
+      <div class="chat-area">
+        <!-- Suggested Questions -->
+        <div class="questions-panel">
+          <div class="qp-header open" id="qpHeader" onclick="toggleQP()">
+            <h3><i class="fas fa-lightbulb"></i> Suggested Questions</h3>
+            <i class="fas fa-chevron-down qp-arrow open" id="qpArrow"></i>
+          </div>
+          <div class="qp-body open" id="qpBody">
+            <div class="q-category">
+              <div class="q-cat-label"><i class="fas fa-user-graduate"></i> Attendance</div>
+              <div class="q-chips">
+                <span class="q-chip" onclick="ask('What is my attendance?')"><i class="fas fa-arrow-right"></i> My attendance?</span>
+                <span class="q-chip" onclick="ask('Am I eligible to attend exams?')"><i class="fas fa-arrow-right"></i> Exam eligibility?</span>
+                <span class="q-chip" onclick="ask('How many classes have I missed?')"><i class="fas fa-arrow-right"></i> Classes missed?</span>
+              </div>
+            </div>
+            <div class="q-category">
+              <div class="q-cat-label"><i class="fas fa-star"></i> Marks &amp; CGPA</div>
+              <div class="q-chips">
+                <span class="q-chip" onclick="ask('What are my marks?')"><i class="fas fa-arrow-right"></i> My marks?</span>
+                <span class="q-chip" onclick="ask('What is my CGPA?')"><i class="fas fa-arrow-right"></i> My CGPA?</span>
+                <span class="q-chip" onclick="ask('Show my semester results')"><i class="fas fa-arrow-right"></i> Semester results</span>
+              </div>
+            </div>
+            <div class="q-category">
+              <div class="q-cat-label"><i class="fas fa-rupee-sign"></i> Fees</div>
+              <div class="q-chips">
+                <span class="q-chip" onclick="ask('What are my pending fees?')"><i class="fas fa-arrow-right"></i> Pending fees?</span>
+                <span class="q-chip" onclick="ask('When is the fee due date?')"><i class="fas fa-arrow-right"></i> Fee due date?</span>
+                <span class="q-chip" onclick="ask('How do I pay my fees online?')"><i class="fas fa-arrow-right"></i> How to pay?</span>
+              </div>
+            </div>
+            <div class="q-category">
+              <div class="q-cat-label"><i class="fas fa-book"></i> Library</div>
+              <div class="q-chips">
+                <span class="q-chip" onclick="ask('What are the library timings?')"><i class="fas fa-arrow-right"></i> Library hours?</span>
+                <span class="q-chip" onclick="ask('Do I have any overdue books?')"><i class="fas fa-arrow-right"></i> Overdue books?</span>
+                <span class="q-chip" onclick="ask('How do I borrow a book?')"><i class="fas fa-arrow-right"></i> Borrow a book?</span>
+              </div>
+            </div>
+            <div class="q-category">
+              <div class="q-cat-label"><i class="fas fa-briefcase"></i> Placements &amp; Events</div>
+              <div class="q-chips">
+                <span class="q-chip" onclick="ask('What placement drives are available?')"><i class="fas fa-arrow-right"></i> Open drives?</span>
+                <span class="q-chip" onclick="ask('What events are happening on campus?')"><i class="fas fa-arrow-right"></i> Campus events?</span>
+                <span class="q-chip" onclick="ask('What is my timetable?')"><i class="fas fa-arrow-right"></i> My timetable?</span>
+                <span class="q-chip" onclick="ask('When are the exams?')"><i class="fas fa-arrow-right"></i> Exam schedule?</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="chat-container">
+          <div class="chat-history" id="chatHistory">
+            <!-- Welcome message -->
+            <div class="msg-row">
+              <div class="msg-avatar"><i class="fas fa-robot"></i></div>
+              <div>
+                <div class="chat-msg bot">👋 Hello! I'm your <strong>SmartCampus AI Assistant</strong>.
+
+I can instantly help you with:
+• 📋 Attendance &amp; exam eligibility
+• 📊 Marks &amp; CGPA analysis
+• 💰 Fees, payments &amp; due dates
+• 📚 Library catalog &amp; borrowing
+• 💼 Placement drives &amp; companies
+• 🎉 Campus events &amp; workshops
+• 🗓️ Timetables &amp; exam schedules
+
+Click any suggestion above or type your question below!</div>
+                <span class="msg-time">Just now</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+
+          <div class="chat-input-row">
+            <button class="clear-btn" onclick="clearChat()" title="Clear chat"><i class="fas fa-trash-alt"></i></button>
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type your question here..." onkeydown="if(event.key==='Enter')sendMsg()">
+            <button class="send-btn" onclick="sendMsg()" title="Send"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    checkAuth();
+
+    function toggleQP() {
+      const body  = document.getElementById('qpBody');
+      const arrow = document.getElementById('qpArrow');
+      const hdr   = document.getElementById('qpHeader');
+      const open  = body.classList.toggle('open');
+      arrow.classList.toggle('open', open);
+      hdr.classList.toggle('open', open);
+    }
+
+    function ask(question) {
+      document.getElementById('chatInput').value = question;
+      sendMsg();
+    }
+
+    function now() {
+      return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    function appendMsg(text, sender) {
+      const history = document.getElementById('chatHistory');
+      const isBot   = sender === 'bot';
+      const row = document.createElement('div');
+      row.className = `msg-row ${isBot ? '' : 'user-row'}`;
+
+      const user = MOCK.users.student1; // fallback
+      const curUser = JSON.parse(localStorage.getItem('sc-user') || '{}');
+      const avatarTxt = isBot ? '<i class="fas fa-robot"></i>' : (curUser.avatar || 'U');
+
+      row.innerHTML = `
+        <div class="msg-avatar">${avatarTxt}</div>
+        <div>
+          <div class="chat-msg ${sender}">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>
+          <span class="msg-time">${now()}</span>
+        </div>`;
+      history.appendChild(row);
+      history.scrollTop = history.scrollHeight;
+    }
+
+    async function sendMsg() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
+
+      appendMsg(msg, 'user');
+
+      const indicator = document.getElementById('typingIndicator');
+      indicator.style.display = 'block';
+      document.getElementById('chatHistory').scrollTop = 99999;
+
+      await new Promise(r => setTimeout(r, 900 + Math.random()*600));
+      indicator.style.display = 'none';
+
+      const response = getChatResponse(msg);
+      appendMsg(response, 'bot');
+    }
+
+    function clearChat() {
+      const h = document.getElementById('chatHistory');
+      h.innerHTML = '';
+      appendMsg('Chat cleared. How can I help you? 😊', 'bot');
+    }
+  </script>
+</body>
+</html>

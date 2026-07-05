@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — SmartCampus AI</title>
+  <meta name="description" content="SmartCampus Admin Dashboard — Manage users, monitor stats, and configure system details.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Table modifications */
+    .role-badge { padding:4px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+    .role-STUDENT { background:rgba(16,185,129,0.12); color:#10b981; }
+    .role-FACULTY { background:rgba(var(--shadow-color),0.12); color:var(--primary); }
+    .role-ADMIN   { background:rgba(239,68,68,0.12); color:#ef4444; }
+
+    /* Admin specifics */
+    .system-info-panel {
+      padding:24px; border-radius:var(--radius); background:var(--surface);
+      border:1px solid var(--border); box-shadow:var(--shadow); margin-top:24px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+      <div><div class="sidebar-brand-text">Admin Panel</div><div class="sidebar-brand-sub">SmartCampus AI</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Navigation</span>
+      <a class="sidebar-link active" id="nav-overview" href="#" onclick="showSection('overview'); return false;"><i class="fas fa-chart-pie"></i><span>Overview</span></a>
+      <a class="sidebar-link" id="nav-users" href="#" onclick="showSection('users'); return false;"><i class="fas fa-users"></i><span>Manage Users</span></a>
+      <a class="sidebar-link" id="nav-logins" href="#" onclick="showSection('logins'); return false;"><i class="fas fa-history"></i><span>Login Logs</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+        <div id="sidebar-user-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div><div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);"></div></div>
+      </div>
+      <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;"><i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span></button>
+      <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-icon" style="background:linear-gradient(135deg,var(--danger),var(--accent))"><i class="fas fa-user-shield"></i></div>
+      <div><h1 id="welcomeMsg">Welcome, Admin</h1><p>Oversee and manage system users, roles, and status</p></div>
+    </div>
+
+    <!-- ── Overview Section ── -->
+    <div id="section-overview">
+      <div class="stats-grid">
+        <div class="stat-card" onclick="showSection('users')" style="cursor:pointer;" title="View Students">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-value" id="statStudents">—</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card" onclick="showSection('users')" style="cursor:pointer;" title="View Faculty">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div class="stat-value" id="statFaculty">—</div>
+          <div class="stat-label">Total Faculty</div>
+        </div>
+        <div class="stat-card" onclick="showSection('users')" style="cursor:pointer;" title="View Admins">
+          <div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f59e0b)"><i class="fas fa-user-shield"></i></div>
+          <div class="stat-value" id="statAdmins">—</div>
+          <div class="stat-label">System Admins</div>
+        </div>
+        <div class="stat-card" onclick="showSection('users')" style="cursor:pointer;" title="View All Users">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--info),var(--primary))"><i class="fas fa-users"></i></div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+      </div>
+
+      <div class="system-info-panel">
+        <h3 style="margin-bottom:14px;"><i class="fas fa-cogs" style="color:var(--primary);margin-right:8px;"></i>Quick Admin Actions</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="showSection('users')"><i class="fas fa-users"></i> Manage All Users</button>
+          <button class="btn btn-success" onclick="showSection('users'); openAddUserModal();"><i class="fas fa-user-plus"></i> Add New User Account</button>
+          <button class="btn btn-secondary" onclick="showToast('Database backups synced successfully.', 'success')"><i class="fas fa-database"></i> Backup System Data</button>
+        </div>
+      </div>
+
+      <div class="system-info-panel">
+        <h3 style="margin-bottom:10px;"><i class="fas fa-info-circle" style="color:var(--primary);margin-right:8px;"></i>System Environment Status</h3>
+        <p style="margin:0;font-size:0.9rem;">
+          Database Mode: <strong>Mock Cache Engine (DEMO Mode)</strong> &nbsp;|&nbsp;
+          Host System: <strong>http://localhost:8000</strong> &nbsp;|&nbsp;
+          Secure Key Protocol: <strong>Local JWT Simulation</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Users Management Section ── -->
+    <div id="section-users" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <h2 style="margin:0;font-size:1.4rem;">User Registry</h2>
+        <button class="btn btn-primary" onclick="openAddUserModal()"><i class="fas fa-user-plus"></i> Add New User</button>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="filter-chips">
+        <button class="chip active" id="tab-ALL" onclick="filterTable('ALL', this)">All Users</button>
+        <button class="chip" id="tab-STUDENT" onclick="filterTable('STUDENT', this)">Students</button>
+        <button class="chip" id="tab-FACULTY" onclick="filterTable('FACULTY', this)">Faculty</button>
+        <button class="chip" id="tab-ADMIN" onclick="filterTable('ADMIN', this)">Admins</button>
+      </div>
+
+      <!-- Search -->
+      <div class="search-row">
+        <div class="search-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" id="userSearch" placeholder="Search users by name, username or email…" oninput="renderTable()">
+        </div>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Full Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th style="text-align:center;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="7" style="text-align:center;opacity:0.5;padding:30px;">Loading users…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Login Logs Section ── -->
+    <div id="section-logins" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <h2 style="margin:0;font-size:1.4rem;">System Login History</h2>
+        <button class="btn btn-danger" onclick="clearLoginLogs()"><i class="fas fa-trash-alt"></i> Clear Logs</button>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="loginLogsTableBody">
+            <tr><td colspan="5" style="text-align:center;opacity:0.5;padding:30px;">No login activity recorded.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal-box">
+    <h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;"></i>Add New System User</h3>
+    <form id="addUserForm" onsubmit="submitAddUser(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input class="form-control" type="text" id="newFullName" placeholder="e.g. Jane Doe" required>
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input class="form-control" type="text" id="newUsername" placeholder="e.g. jane_doe" required>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input class="form-control" type="email" id="newEmail" placeholder="e.g. jane@campus.edu" required>
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input class="form-control" type="tel" id="newPhone" placeholder="e.g. 9876543210">
+      </div>
+      <div class="form-group">
+        <label>Password (Default: password)</label>
+        <input class="form-control" type="password" id="newPassword" placeholder="Leave blank for default">
+      </div>
+      <div class="form-group">
+        <label>Role Privilege Group</label>
+        <select class="form-control" id="newRole" required>
+          <option value="STUDENT">Student (Standard Access)</option>
+          <option value="FACULTY">Faculty (Instructor Access)</option>
+          <option value="ADMIN">Administrator (Full Privilege)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="button" class="btn btn-secondary" style="flex:1" onclick="closeModal('addUserModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:2"><i class="fas fa-check"></i> Create Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box" style="max-width:380px;text-align:center;">
+    <div style="font-size:2.5rem;color:var(--danger);margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i></div>
+    <h3 style="margin:0 0 10px;">Remove User Account?</h3>
+    <p id="deleteModalMsg" style="color:var(--text-2);font-size:0.9rem;margin:0 0 22px;line-height:1.5;"></p>
+    <div style="display:flex;gap:12px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-danger" style="flex:1" onclick="confirmDelete()"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+  // Auth and Role Enforcement
+  const adminUser = checkAdmin();
+  if (!adminUser) throw 'Access Denied';
+
+  document.getElementById('welcomeMsg').innerText = `Welcome, ${adminUser.fullName}`;
+
+  let users = Object.values(MOCK.users);
+  let currentFilter = 'ALL';
+  let pendingDeleteId = null;
+
+  function loadOverview() {
+    const students = users.filter(u => u.role === 'STUDENT').length;
+    const faculty  = users.filter(u => u.role === 'FACULTY').length;
+    const admins   = users.filter(u => u.role === 'ADMIN').length;
+
+    document.getElementById('statStudents').textContent = students;
+    document.getElementById('statFaculty').textContent  = faculty;
+    document.getElementById('statAdmins').textContent   = admins;
+    document.getElementById('statTotal').textContent    = users.length;
+  }
+
+  function filterTable(role, btn) {
+    currentFilter = role;
+    document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    let filtered = users.filter(u => {
+      const matchRole = currentFilter === 'ALL' || u.role === currentFilter;
+      const matchQ = !q ||
+        (u.fullName || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q);
+      return matchRole && matchQ;
+    });
+
+    const tbody = document.getElementById('userTableBody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;opacity:0.5;padding:30px;">No matching accounts in registry.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => `
+      <tr>
+        <td style="opacity:0.5;">#${u.id}</td>
+        <td><strong>${u.fullName}</strong></td>
+        <td><code style="background:var(--border-2);padding:2px 7px;border-radius:5px;font-size:0.8rem">${u.username}</code></td>
+        <td>${u.email}</td>
+        <td>${u.phone || '—'}</td>
+        <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+        <td style="text-align:center">
+          <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${u.id}, '${u.fullName.replace(/'/g, "\\'")}')">
+            <i class="fas fa-trash-alt"></i> Delete
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function openAddUserModal() {
+    document.getElementById('addUserForm').reset();
+    openModal('addUserModal');
+  }
+
+  function submitAddUser(e) {
+    e.preventDefault();
+    const fullName = document.getElementById('newFullName').value.trim();
+    const username = document.getElementById('newUsername').value.trim();
+    const email    = document.getElementById('newEmail').value.trim();
+    const phone    = document.getElementById('newPhone').value.trim();
+    const password = document.getElementById('newPassword').value || 'password';
+    const role     = document.getElementById('newRole').value;
+
+    const newId = users.length > 0 ? Math.max(...users.map(u=>u.id)) + 1 : 1;
+    const newUser = { id: newId, username, password, role, fullName, email, phone, avatar: fullName.slice(0,2).toUpperCase() };
+
+    users.push(newUser);
+    MOCK.users[username] = newUser; // synchronize to mock registry
+    try {
+      const customUsers = JSON.parse(localStorage.getItem('sc-custom-users') || '{}');
+      customUsers[username] = newUser;
+      localStorage.setItem('sc-custom-users', JSON.stringify(customUsers));
+    } catch (err) {
+      console.error('Error saving custom user:', err);
+    }
+
+    showToast(`Account for ${fullName} created!`, 'success');
+    closeModal('addUserModal');
+    loadOverview();
+    renderTable();
+  }
+
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('deleteModalMsg').innerHTML = `Are you sure you want to permanently delete <strong>${name}</strong>? This action cannot be revoked.`;
+    openModal('deleteModal');
+  }
+
+  function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const userIndex = users.findIndex(u => u.id === pendingDeleteId);
+    if (userIndex !== -1) {
+      const removedUser = users[userIndex];
+      users.splice(userIndex, 1);
+      delete MOCK.users[removedUser.username];
+      try {
+        const customUsers = JSON.parse(localStorage.getItem('sc-custom-users') || '{}');
+        delete customUsers[removedUser.username];
+        localStorage.setItem('sc-custom-users', JSON.stringify(customUsers));
+      } catch (err) {
+        console.error('Error deleting custom user:', err);
+      }
+      showToast(`Account for ${removedUser.fullName} has been removed.`, 'success');
+    }
+    closeModal('deleteModal');
+    loadOverview();
+    renderTable();
+    pendingDeleteId = null;
+  }
+
+  function showSection(sectionName) {
+    document.getElementById('section-overview').style.display = sectionName === 'overview' ? 'block' : 'none';
+    document.getElementById('section-users').style.display    = sectionName === 'users' ? 'block' : 'none';
+    document.getElementById('section-logins').style.display   = sectionName === 'logins' ? 'block' : 'none';
+
+    document.getElementById('nav-overview').classList.toggle('active', sectionName === 'overview');
+    document.getElementById('nav-users').classList.toggle('active', sectionName === 'users');
+    document.getElementById('nav-logins').classList.toggle('active', sectionName === 'logins');
+
+    if (sectionName === 'users') renderTable();
+    if (sectionName === 'logins') renderLoginLogs();
+  }
+
+  function renderLoginLogs() {
+    const logs = JSON.parse(localStorage.getItem('sc-login-logs') || '[]');
+    const tbody = document.getElementById('loginLogsTableBody');
+    if (logs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:0.5;padding:30px;">No login activity recorded.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = logs.map(l => {
+      const statusColor = l.status === 'SUCCESS' ? 'color:#10b981;font-weight:bold;' : 'color:#ef4444;font-weight:bold;';
+      const formattedTime = new Date(l.timestamp).toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      return `
+        <tr>
+          <td>${formattedTime}</td>
+          <td><code style="background:var(--border-2);padding:2px 7px;border-radius:5px;font-size:0.8rem">${l.username}</code></td>
+          <td><strong>${l.fullName}</strong></td>
+          <td><span class="role-badge role-${l.role}">${l.role}</span></td>
+          <td style="${statusColor}">${l.status}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function clearLoginLogs() {
+    if (confirm('Are you sure you want to clear all login logs?')) {
+      localStorage.removeItem('sc-login-logs');
+      showToast('Login logs cleared.', 'success');
+      renderLoginLogs();
+    }
+  }
+
+  // Init
+  loadOverview();
+</script>
+</body>
+</html>

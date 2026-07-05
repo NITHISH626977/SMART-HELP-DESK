@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SmartCampus AI</title>
+  <meta name="description" content="Your SmartCampus student dashboard — view attendance, CGPA, fees, assignments and quick access to all modules.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .welcome-row { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px; }
+    .welcome-text h1 { font-size:1.8rem;font-weight:900; }
+    .welcome-text p  { color:var(--text-muted);margin-top:4px;font-size:0.9rem; }
+    .avatar {
+      width:48px;height:48px;border-radius:14px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:800;font-size:1.1rem;
+      box-shadow:0 4px 14px rgba(var(--shadow-color),0.4);flex-shrink:0;
+    }
+
+    /* Charts row */
+    .charts-row { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px; }
+    @media(max-width:800px){.charts-row{grid-template-columns:1fr;}}
+    .chart-card { padding:24px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow); }
+    .chart-card h3 { font-size:0.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px; }
+    .chart-card h3 i { color:var(--primary); }
+
+    /* Activity */
+    .activity-list { display:flex;flex-direction:column;gap:12px; }
+    .activity-item {
+      display:flex;align-items:center;gap:14px;
+      padding:14px;border-radius:var(--radius-sm);
+      background:var(--surface-2);border:1px solid var(--border);
+      transition:transform 0.2s;
+    }
+    .activity-item:hover { transform:translateX(4px); }
+    .activity-icon {
+      width:42px;height:42px;border-radius:12px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1rem;color:#fff;
+    }
+    .activity-info h4 { font-size:0.9rem;margin-bottom:3px; }
+    .activity-info p  { font-size:0.8rem;color:var(--text-muted);margin:0; }
+
+    /* Modules mini grid */
+    .modules-mini { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px; }
+    .mod-card {
+      padding:20px;border-radius:var(--radius);text-align:center;
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);
+      transition:transform 0.22s,box-shadow 0.22s;cursor:pointer;
+    }
+    .mod-card:hover { transform:translateY(-5px);box-shadow:var(--shadow-md); }
+    .mod-card .m-icon {
+      width:48px;height:48px;border-radius:14px;margin:0 auto 12px;
+      display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;
+    }
+    .mod-card h4 { font-size:0.88rem;font-weight:700;margin-bottom:4px; }
+    .mod-card p  { font-size:0.75rem;color:var(--text-muted);margin:0; }
+
+    /* Subject attendance bars */
+    .subj-bar-wrap { display:flex;flex-direction:column;gap:10px; }
+    .subj-bar { }
+    .subj-bar-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:5px; }
+    .subj-bar-header span { font-size:0.82rem;font-weight:500; }
+    .subj-bar-header strong { font-size:0.82rem;color:var(--primary); }
+    .bar-track { height:6px;background:var(--border);border-radius:10px;overflow:hidden; }
+    .bar-fill { height:100%;border-radius:10px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 1s ease; }
+    .bar-fill.warn { background:linear-gradient(90deg,#f59e0b,#ef4444); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+        <div>
+          <div class="sidebar-brand-text">SmartCampus</div>
+          <div class="sidebar-brand-sub">AI Helpdesk</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <span class="sidebar-section-label">Navigation</span>
+        <a class="sidebar-link" href="dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+        <a class="sidebar-link" href="chatbot.html"><i class="fas fa-robot"></i><span>AI Helpdesk</span></a>
+        <a class="sidebar-link" href="library.html"><i class="fas fa-book-open"></i><span>Library</span></a>
+        <a class="sidebar-link" href="placements.html"><i class="fas fa-briefcase"></i><span>Placements</span></a>
+        <a class="sidebar-link" href="events.html"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <!-- user info -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+          <div class="avatar" id="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.85rem;border-radius:10px;">AS</div>
+          <div style="flex:1;min-width:0;">
+            <div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Arjun Sharma</div>
+            <div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);">STUDENT</div>
+          </div>
+        </div>
+        <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;">
+          <i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span>
+        </button>
+        <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);">
+          <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <!-- Welcome -->
+      <div class="welcome-row">
+        <div class="welcome-text">
+          <h1 id="welcomeMsg">Welcome back 👋</h1>
+          <p id="welcomeSub">Here's your academic overview for today.</p>
+        </div>
+        <div class="avatar" id="topAvatar">AS</div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-percent"></i></div>
+          <div class="stat-value" id="statAttend">—</div>
+          <div class="stat-label">Overall Attendance</div>
+          <div class="stat-change" id="statAttendChg"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--info),var(--primary))"><i class="fas fa-star"></i></div>
+          <div class="stat-value" id="statCgpa">—</div>
+          <div class="stat-label">Current CGPA</div>
+          <div class="stat-change up"><i class="fas fa-arrow-up"></i> +0.1 this sem</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fas fa-tasks"></i></div>
+          <div class="stat-value" id="statAssign">—</div>
+          <div class="stat-label">Assignments Due</div>
+          <div class="stat-change down"><i class="fas fa-exclamation-circle"></i> Submit soon</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-rupee-sign"></i></div>
+          <div class="stat-value" id="statFee">—</div>
+          <div class="stat-label">Fee Pending</div>
+          <div class="stat-change down"><i class="fas fa-calendar"></i> Due Jul 31</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3><i class="fas fa-chart-pie"></i> Attendance Overview</h3>
+          <canvas id="attendanceChart" style="max-height:220px"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i class="fas fa-chart-line"></i> CGPA Trend</h3>
+          <canvas id="cgpaChart" style="max-height:220px"></canvas>
+        </div>
+      </div>
+
+      <!-- Subject attendance + Activity -->
+      <div class="charts-row" style="margin-bottom:28px">
+        <div class="chart-card">
+          <h3><i class="fas fa-list-check"></i> Subject-wise Attendance</h3>
+          <div class="subj-bar-wrap" id="subjBars"></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="fas fa-clock-rotate-left"></i> Recent Activity</h3>
+          <div class="activity-list" id="activityList"></div>
+        </div>
+      </div>
+
+      <!-- Quick Modules -->
+      <div class="section-title" style="margin-bottom:16px"><i class="fas fa-th" style="color:var(--primary)"></i> Campus Modules</div>
+      <div class="modules-mini">
+        <a href="chatbot.html" style="text-decoration:none">
+          <div class="mod-card">
+            <div class="m-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-robot"></i></div>
+            <h4>AI Helpdesk</h4><p>Chat with AI</p>
+          </div>
+        </a>
+        <a href="library.html" style="text-decoration:none">
+          <div class="mod-card">
+            <div class="m-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-book-open"></i></div>
+            <h4>Library</h4><p>Browse &amp; borrow</p>
+          </div>
+        </a>
+        <a href="placements.html" style="text-decoration:none">
+          <div class="mod-card">
+            <div class="m-icon" style="background:linear-gradient(135deg,var(--info),var(--primary))"><i class="fas fa-briefcase"></i></div>
+            <h4>Placements</h4><p>Job drives</p>
+          </div>
+        </a>
+        <a href="events.html" style="text-decoration:none">
+          <div class="mod-card">
+            <div class="m-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fas fa-calendar-alt"></i></div>
+            <h4>Events</h4><p>Campus events</p>
+          </div>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const user = checkAuth();
+    if (!user) throw '';
+
+    // Fill user info
+    document.getElementById('welcomeMsg').textContent = `Welcome back, ${user.fullName.split(' ')[0]}! 👋`;
+    document.getElementById('welcomeSub').textContent = `Here's your academic overview for ${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}.`;
+    ['topAvatar','sidebar-user-avatar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = user.avatar || user.fullName.slice(0,2).toUpperCase();
+    });
+
+    const D = MOCK.dashboard;
+
+    // Stat cards with count-up
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        countUp(document.getElementById('statAttend'), D.attendance, '%');
+        countUp(document.getElementById('statCgpa'), D.cgpa, '', 1000);
+        countUp(document.getElementById('statAssign'), D.assignmentsDue, '');
+        document.getElementById('statFee').textContent = '₹' + D.feeDue.toLocaleString();
+      }, 200);
+
+      const attendChg = document.getElementById('statAttendChg');
+      if (D.attendance >= 75) {
+        attendChg.className = 'stat-change up';
+        attendChg.innerHTML = '<i class="fas fa-check-circle"></i> Exam eligible';
+      } else {
+        attendChg.className = 'stat-change down';
+        attendChg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Below 75%!';
+      }
+    });
+
+    // Dynamic colors from theme
+    const rootStyle = getComputedStyle(document.documentElement);
+    const primaryColor = rootStyle.getPropertyValue('--primary').trim() || '#ec4899';
+    const accentColor  = rootStyle.getPropertyValue('--accent').trim() || '#8b5cf6';
+
+    // Attendance doughnut
+    new Chart(document.getElementById('attendanceChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Attended', 'Missed'],
+        datasets: [{ data:[D.attendance, 100-D.attendance], backgroundColor:[primaryColor, primaryColor + '1f'], borderWidth:0, hoverOffset:4 }]
+      },
+      options: {
+        cutout:'72%', plugins:{ legend:{ position:'bottom', labels:{ color: rootStyle.getPropertyValue('--text') || '#f3f4f6', font:{size:12}, padding:16 } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } } }
+      }
+    });
+ 
+    // CGPA line chart
+    new Chart(document.getElementById('cgpaChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6'],
+        datasets: [{ label:'CGPA', data: D.cgpaTrend, borderColor:primaryColor, backgroundColor:primaryColor + '14', pointBackgroundColor:accentColor, pointRadius:5, tension:0.4, fill:true }]
+      },
+      options: { plugins:{legend:{display:false}}, scales:{y:{min:6,max:10,ticks:{color:'#9ca3af',font:{size:11}}},x:{ticks:{color:'#9ca3af',font:{size:11}}}}, elements:{point:{hoverRadius:7}} }
+    });
+
+    // Subject attendance bars
+    const subjContainer = document.getElementById('subjBars');
+    D.attendanceSubjects.forEach(s => {
+      const warn = s.pct < 75;
+      subjContainer.innerHTML += `
+        <div class="subj-bar">
+          <div class="subj-bar-header"><span>${s.subject}</span><strong>${s.pct}%</strong></div>
+          <div class="bar-track"><div class="bar-fill ${warn?'warn':''}" style="width:0%" data-w="${s.pct}%"></div></div>
+        </div>`;
+    });
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill[data-w]').forEach(b => { b.style.width = b.dataset.w; });
+    }, 300);
+
+    // Activity list
+    const lastPlacement = JSON.parse(localStorage.getItem('sc-lastPlacement')||'null');
+    const lastEvent     = JSON.parse(localStorage.getItem('sc-lastEvent')||'null');
+    const activities = [
+      { icon:'fa-book', color:'linear-gradient(135deg,var(--primary),var(--accent))', title:'Last Borrowed Book', sub: D.lastBorrowedBook ? `${D.lastBorrowedBook.title} — Due ${D.lastBorrowedBook.dueDate}` : 'No books borrowed yet' },
+      { icon:'fa-briefcase', color:'linear-gradient(135deg,var(--info),var(--primary))', title:'Last Placement Application', sub: lastPlacement ? `${lastPlacement.role} at ${lastPlacement.company}` : 'No placements applied yet' },
+      { icon:'fa-calendar-check', color:'linear-gradient(135deg,#f59e0b,#ef4444)', title:'Last Registered Event', sub: lastEvent ? `${lastEvent.title} — ${lastEvent.date}` : 'No events registered yet' },
+    ];
+    const actEl = document.getElementById('activityList');
+    activities.forEach(a => {
+      actEl.innerHTML += `
+        <div class="activity-item">
+          <div class="activity-icon" style="background:${a.color}"><i class="fas ${a.icon}"></i></div>
+          <div class="activity-info"><h4>${a.title}</h4><p>${a.sub}</p></div>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

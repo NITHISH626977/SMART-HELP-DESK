@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placements — SmartCampus AI</title>
+  <meta name="description" content="SmartCampus Placements — explore recruitment drives, check eligibility and register with top companies.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Drive cards */
+    .drives-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:20px;margin-bottom:32px; }
+    .drive-card {
+      border-radius:20px;padding:24px;position:relative;overflow:hidden;
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);
+      transition:transform 0.26s,box-shadow 0.26s;
+    }
+    .drive-card:hover { transform:translateY(-5px);box-shadow:var(--shadow-md); }
+    .accent-bar { position:absolute;top:0;left:0;right:0;height:5px; }
+    .drive-top { display:flex;align-items:center;gap:14px;margin-bottom:14px; }
+    .company-logo {
+      width:52px;height:52px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+      font-size:1.3rem;font-weight:900;color:#fff;flex-shrink:0;
+      box-shadow:0 6px 18px rgba(0,0,0,0.2);
+    }
+    .drive-top h3 { font-size:1.05rem;margin-bottom:3px; }
+    .drive-top .industry { font-size:0.78rem;color:var(--text-muted); }
+    .pkg-badge {
+      display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
+      font-weight:800;font-size:0.88rem;
+      background:linear-gradient(135deg,#10b981,#059669);color:#fff;margin-bottom:14px;
+      box-shadow:0 3px 10px rgba(16,185,129,0.3);
+    }
+    .drive-info { display:flex;flex-direction:column;gap:7px;margin-bottom:16px; }
+    .info-row { display:flex;align-items:center;gap:9px;font-size:0.85rem;color:var(--text-2); }
+    .info-row i { width:16px;text-align:center;color:var(--text-muted); }
+    .drive-footer { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+    .status-tag { padding:5px 13px;border-radius:20px;font-size:0.76rem;font-weight:700; }
+    .st-open     { background:rgba(16,185,129,0.12);color:#10b981; }
+    .st-upcoming { background:rgba(245,158,11,0.12);color:#f59e0b; }
+    .st-closed   { background:rgba(239,68,68,0.12);color:#ef4444; }
+    .drive-btns  { display:flex;gap:7px; }
+    .reg-btn { padding:8px 16px;border-radius:20px;border:none;cursor:pointer;font-weight:700;font-size:0.82rem;transition:opacity 0.2s,transform 0.15s;font-family:inherit; }
+    .reg-btn.primary { background:linear-gradient(135deg,var(--info),var(--primary));color:#fff;box-shadow:0 4px 12px rgba(var(--shadow-color),0.3); }
+    .reg-btn.secondary { background:rgba(var(--shadow-color),0.1);color:var(--primary);border:1px solid var(--border); }
+    .reg-btn:hover:not(:disabled) { opacity:0.85;transform:scale(1.04); }
+    .reg-btn:disabled { opacity:0.4;cursor:not-allowed;transform:none; }
+
+    /* Tips */
+    .tips-panel { border-radius:var(--radius);padding:24px;background:linear-gradient(135deg,rgba(var(--shadow-color),0.06),rgba(var(--shadow-color),0.06));border:1px solid var(--border);box-shadow:var(--shadow); }
+    .tip-item { display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:0.87rem;color:var(--text-2); }
+    .tip-item:last-child { border-bottom:none; }
+    .tip-item i { color:var(--info);margin-top:2px;flex-shrink:0; }
+
+    /* Modal form rows */
+    .form-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+      <div><div class="sidebar-brand-text">SmartCampus</div><div class="sidebar-brand-sub">AI Helpdesk</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Navigation</span>
+      <a class="sidebar-link" href="dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <a class="sidebar-link" href="chatbot.html"><i class="fas fa-robot"></i><span>AI Helpdesk</span></a>
+      <a class="sidebar-link" href="library.html"><i class="fas fa-book-open"></i><span>Library</span></a>
+      <a class="sidebar-link" href="placements.html"><i class="fas fa-briefcase"></i><span>Placements</span></a>
+      <a class="sidebar-link" href="events.html"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+        <div id="sidebar-user-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div><div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);"></div></div>
+      </div>
+      <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;"><i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span></button>
+      <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-icon" style="background:linear-gradient(135deg,var(--info),var(--primary))"><i class="fas fa-briefcase"></i></div>
+      <div><h1>Placements</h1><p>Explore recruitment drives &amp; register with top companies</p></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="placementStats">
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-building"></i></div><div class="stat-value">7</div><div class="stat-label">Total Drives</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-door-open"></i></div><div class="stat-value">3</div><div class="stat-label">Open Drives</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fas fa-users"></i></div><div class="stat-value">142</div><div class="stat-label">Students Placed</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-trophy"></i></div><div class="stat-value">₹42 LPA</div><div class="stat-label">Highest Package</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-chips" id="driveFilters">
+      <button class="chip active" onclick="filterDrives('ALL',this)">All Drives</button>
+      <button class="chip" onclick="filterDrives('OPEN',this)">🟢 Open</button>
+      <button class="chip" onclick="filterDrives('UPCOMING',this)">🟡 Upcoming</button>
+      <button class="chip" onclick="filterDrives('CLOSED',this)">🔴 Closed</button>
+    </div>
+
+    <div class="section-title"><i class="fas fa-building" style="color:var(--info)"></i> Recruitment Drives</div>
+    <div class="drives-grid" id="drivesGrid"></div>
+
+    <!-- Tips -->
+    <div class="section-title"><i class="fas fa-lightbulb" style="color:#f59e0b"></i> Placement Tips</div>
+    <div class="tips-panel">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <i class="fas fa-star" style="color:#f59e0b;font-size:1.1rem"></i>
+        <h3 style="margin:0;font-size:1rem">Pro Tips from Placement Cell</h3>
+      </div>
+      <div class="tip-item"><i class="fas fa-check-circle"></i><div><strong>Resume Ready:</strong> Keep your resume updated with latest projects. Always have a PDF version ready to submit.</div></div>
+      <div class="tip-item"><i class="fas fa-check-circle"></i><div><strong>CGPA Matters:</strong> Most companies have a CGPA cutoff. Maintain it above 7.5 for maximum eligibility.</div></div>
+      <div class="tip-item"><i class="fas fa-check-circle"></i><div><strong>Practice DSA:</strong> Data Structures &amp; Algorithms are tested in nearly every tech interview. Use LeetCode daily.</div></div>
+      <div class="tip-item"><i class="fas fa-check-circle"></i><div><strong>Mock Interviews:</strong> Attend the placement cell's weekly mock sessions every Friday at 3 PM in Seminar Hall B.</div></div>
+      <div class="tip-item"><i class="fas fa-check-circle"></i><div><strong>Register Early:</strong> Submit your resume to the placement cell at least 2 weeks before the drive date.</div></div>
+    </div>
+  </main>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="regModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('regModal')"><i class="fas fa-times"></i></button>
+    <div id="regModalContent"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+  checkAuth();
+  let allDrives = [...MOCK.drives];
+  const accentVal = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#8b5cf6';
+
+  function renderDrives(drives) {
+    const grid = document.getElementById('drivesGrid');
+    if (!drives.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-briefcase"></i><p>No drives found.</p></div>`;
+      return;
+    }
+    grid.innerHTML = drives.map(d => {
+      const sc = d.status.toLowerCase();
+      const stClass = { OPEN:'st-open', UPCOMING:'st-upcoming', CLOSED:'st-closed' }[d.status];
+      const isClosed = d.status === 'CLOSED';
+      const regBtn = isClosed
+        ? `<button class="reg-btn primary" disabled><i class="fas fa-lock"></i> Closed</button>`
+        : `<button class="reg-btn primary" onclick="openRegModal(${d.id})"><i class="fas fa-user-plus"></i> Register</button>`;
+
+      return `
+        <div class="drive-card">
+          <div class="accent-bar" style="background:linear-gradient(90deg,${d.color},${accentVal})"></div>
+          <div class="drive-top">
+            <div class="company-logo" style="background:${d.color}">${d.logo}</div>
+            <div><h3>${d.company}</h3><div class="industry">${d.industry}</div></div>
+          </div>
+          <div class="pkg-badge"><i class="fas fa-rupee-sign"></i> ${d.package}</div>
+          <div class="drive-info">
+            <div class="info-row"><i class="fas fa-briefcase"></i> ${d.jobTitle}</div>
+            <div class="info-row"><i class="fas fa-graduation-cap"></i> ${d.eligibility}</div>
+            <div class="info-row"><i class="fas fa-calendar-alt"></i> Interview: ${d.interviewDate}</div>
+          </div>
+          <div class="drive-footer">
+            <span class="status-tag ${stClass}">${d.status}</span>
+            <div class="drive-btns">${regBtn}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function filterDrives(status, btn) {
+    document.querySelectorAll('.filter-chips .chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    renderDrives(status==='ALL' ? allDrives : allDrives.filter(d=>d.status===status));
+  }
+
+  function openRegModal(id) {
+    const d = allDrives.find(x=>x.id===id);
+    if (!d) return;
+    const user = JSON.parse(localStorage.getItem('sc-user')||'{}');
+    document.getElementById('regModalContent').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border)">
+        <div style="width:52px;height:52px;border-radius:15px;background:${d.color};display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff;flex-shrink:0;">${d.logo}</div>
+        <div><h2 style="margin:0;font-size:1.1rem">${d.company}</h2><p style="margin:3px 0 0;font-size:0.82rem;color:var(--text-muted)">${d.jobTitle} — ${d.package}</p></div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:12px">
+        <div class="form-group"><label><i class="fas fa-calendar"></i> Interview Date</label><input class="form-control" value="${d.interviewDate}" readonly style="opacity:0.7"></div>
+        <div class="form-group"><label><i class="fas fa-graduation-cap"></i> Eligibility</label><input class="form-control" value="${d.eligibility}" readonly style="opacity:0.7;font-size:0.78rem"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Full Name *</label><input class="form-control" id="rName" value="${user.fullName||''}" placeholder="Your full name" required></div>
+        <div class="form-group"><label>Student ID *</label><input class="form-control" id="rStudentId" placeholder="e.g. CS2021001" required></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Email *</label><input class="form-control" id="rEmail" type="email" value="${user.email||''}" placeholder="your@student.edu" required></div>
+        <div class="form-group"><label>CGPA *</label><input class="form-control" id="rCgpa" type="number" value="8.7" step="0.1" min="0" max="10" required></div>
+      </div>
+      <div class="form-group">
+        <label>Branch / Department *</label>
+        <select class="form-control" id="rBranch" required>
+          <option value="">Select branch</option>
+          <option selected>Computer Science &amp; Engineering</option>
+          <option>Information Technology</option>
+          <option>Electronics &amp; Communication</option>
+          <option>Electrical Engineering</option>
+          <option>Mechanical Engineering</option>
+          <option>MBA</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Resume Link (Google Drive / LinkedIn)</label>
+        <input class="form-control" id="rResume" type="url" placeholder="https://drive.google.com/...">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" style="margin-top:6px" onclick="submitReg(${d.id})">
+        <i class="fas fa-user-plus"></i> Confirm Registration
+      </button>`;
+    openModal('regModal');
+  }
+
+  function submitReg(driveId) {
+    const name   = document.getElementById('rName').value.trim();
+    const sid    = document.getElementById('rStudentId').value.trim();
+    const email  = document.getElementById('rEmail').value.trim();
+    const cgpa   = document.getElementById('rCgpa').value.trim();
+    const branch = document.getElementById('rBranch').value;
+    if (!name||!sid||!email||!cgpa||!branch) { showToast('Please fill all required fields.','warning'); return; }
+
+    const d = allDrives.find(x=>x.id===driveId);
+    const ref = genRef('PL');
+
+    localStorage.setItem('sc-lastPlacement', JSON.stringify({ company:d.company, role:d.jobTitle, referenceId:ref, interviewDate:d.interviewDate }));
+
+    document.getElementById('regModalContent').innerHTML = `
+      <div class="success-card">
+        <div class="tick"><i class="fas fa-check-circle"></i></div>
+        <h3>Registration Confirmed! 🎉</h3>
+        <p>You've successfully registered for <strong>${d.jobTitle}</strong> at <strong>${d.company}</strong>.</p>
+        <div class="ref-badge"><i class="fas fa-barcode"></i> ${ref}</div>
+        <p style="margin-top:14px;font-size:0.82rem">Interview Date: <strong>${d.interviewDate}</strong><br>Save your reference ID for future correspondence.</p>
+        <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="closeModal('regModal')"><i class="fas fa-check"></i> Done</button>
+      </div>`;
+    showToast('Registered successfully! Check your reference ID.','success');
+  }
+
+  renderDrives(allDrives);
+</script>
+</body>
+</html>

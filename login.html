@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — SmartCampus AI</title>
+  <meta name="description" content="Sign in or register for SmartCampus AI. Access your student dashboard, library, placements, events and AI helpdesk.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; overflow:hidden; padding:20px; }
+    body::before { display:none; }
+
+    /* animated blobs */
+    .blob { position:fixed; border-radius:50%; filter:blur(90px); opacity:0.22; animation:blobFloat 10s ease-in-out infinite; pointer-events:none; z-index:0; }
+    .blob-1 { width:600px;height:600px;background:var(--primary);top:-180px;left:-180px; }
+    .blob-2 { width:480px;height:480px;background:var(--accent);bottom:-140px;right:-100px;animation-delay:4s; }
+    .blob-3 { width:320px;height:320px;background:var(--info);top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.15;animation-delay:2s; }
+    @keyframes blobFloat {
+      0%,100%{transform:scale(1) translate(0,0)} 33%{transform:scale(1.07) translate(20px,-20px)} 66%{transform:scale(0.94) translate(-12px,15px)}
+    }
+    .blob-3 { animation:blobFloat3 10s ease-in-out infinite 2s; }
+    @keyframes blobFloat3 {
+      0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.18)}
+    }
+
+    /* Card */
+    .card-wrap { position:relative;z-index:10;width:100%;max-width:460px; }
+    .card {
+      background:var(--surface);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+      border:1px solid var(--border);border-radius:28px;padding:44px 40px;
+      box-shadow:var(--shadow-md);
+      animation:cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(32px) scale(0.95)} to{opacity:1;transform:none} }
+
+    /* Logo */
+    .logo { text-align:center;margin-bottom:32px; }
+    .logo-icon {
+      width:68px;height:68px;background:linear-gradient(135deg,var(--primary),var(--accent));
+      border-radius:20px;display:inline-flex;align-items:center;justify-content:center;
+      font-size:1.8rem;color:#fff;margin-bottom:16px;
+      box-shadow:0 10px 30px rgba(var(--shadow-color),0.4);
+    }
+    .logo h1 { font-size:1.55rem;font-weight:900;color:var(--text);margin-bottom:5px; }
+    .logo p  { font-size:0.83rem;color:var(--text-2); }
+
+    /* Tabs */
+    .tab-row {
+      display:flex;gap:4px;background:rgba(0,0,0,0.06);
+      border-radius:14px;padding:4px;margin-bottom:26px;
+    }
+    [data-theme="dark"] .tab-row {
+      background:rgba(0,0,0,0.28);
+    }
+    .tab-btn {
+      flex:1;padding:10px 0;border:none;cursor:pointer;border-radius:11px;
+      font-size:0.88rem;font-weight:600;transition:all 0.25s;
+      background:transparent;color:var(--text-2);font-family:inherit;
+    }
+    .tab-btn.active {
+      background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;
+      box-shadow:0 4px 14px rgba(var(--shadow-color),0.4);
+    }
+
+    /* Form */
+    .form-panel { display:none; }
+    .form-panel.active { display:block; animation:fadeInUp 0.3s ease; }
+
+    .field { position:relative;margin-bottom:14px; }
+    .field-icon {
+      position:absolute;left:14px;top:50%;transform:translateY(-50%);
+      color:var(--text-muted);font-size:0.88rem;pointer-events:none;z-index:1;
+    }
+    .field input,.field select {
+      width:100%;padding:13px 14px 13px 42px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:13px;color:var(--text);font-size:0.9rem;font-family:inherit;outline:none;
+      transition:border-color 0.2s,background 0.2s;
+    }
+    .field input::placeholder { color:var(--text-muted); }
+    .field input:focus,.field select:focus { border-color:var(--primary);background:rgba(var(--shadow-color),0.06); }
+    [data-theme="dark"] .field input:focus,[data-theme="dark"] .field select:focus { background:rgba(var(--shadow-color),0.1); }
+    .field select option { background:var(--bg-2);color:var(--text); }
+    .field-row { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+
+    /* Alert */
+    .alert {
+      display:none;align-items:center;gap:10px;
+      padding:12px 15px;border-radius:12px;font-size:0.84rem;font-weight:500;margin-bottom:16px;
+    }
+    .alert.error   { display:flex;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5; }
+    .alert.success { display:flex;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7; }
+    .alert.hidden  { display:none!important; }
+
+    /* Submit btn */
+    .btn-submit {
+      width:100%;padding:14px;border:none;border-radius:13px;cursor:pointer;
+      font-size:0.95rem;font-weight:700;color:#fff;font-family:inherit;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      box-shadow:0 8px 22px rgba(var(--shadow-color),0.38);
+      transition:transform 0.2s,box-shadow 0.2s,opacity 0.2s;
+      margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px;
+    }
+    .btn-submit:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 14px 30px rgba(var(--shadow-color),0.5); }
+    .btn-submit:disabled { opacity:0.6;cursor:not-allowed;transform:none; }
+    .spinner { width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none; }
+
+    /* Divider */
+    .divider {
+      display:flex;align-items:center;gap:12px;margin:20px 0;
+      font-size:0.77rem;color:var(--text-muted);
+    }
+    .divider::before,.divider::after { content:'';flex:1;height:1px;background:var(--border); }
+
+    /* Demo creds */
+    .creds-hint {
+      background:rgba(var(--shadow-color),0.06);border:1px solid var(--border);
+      border-radius:12px;padding:14px 16px;font-size:0.78rem;color:var(--text-2);line-height:1.8;
+    }
+    .creds-hint strong { color:var(--text); }
+    .creds-grid { display:flex;justify-content:center;margin-top:12px; }
+    .cred-btn {
+      width:100%;max-width:180px;
+      padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+      background:var(--surface-2);color:var(--text-2);
+      font-size:0.8rem;font-weight:600;cursor:pointer;text-align:center;
+      transition:all 0.2s;font-family:inherit;
+    }
+    .cred-btn:hover { background:rgba(var(--shadow-color),0.12);border-color:var(--primary);color:var(--primary); }
+    .cred-btn i { display:block;font-size:1.1rem;margin-bottom:6px; }
+
+    /* Theme toggle */
+    .theme-abs {
+      position:fixed;top:18px;right:18px;z-index:100;
+      background:var(--surface);backdrop-filter:blur(12px);
+      border:1px solid var(--border);border-radius:10px;
+      padding:9px 12px;cursor:pointer;color:var(--text);
+      font-size:0.95rem;transition:all 0.2s;
+    }
+    .theme-abs:hover { background:rgba(var(--shadow-color),0.1);color:var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <button class="theme-abs theme-toggle-btn" id="theme-toggle" title="Toggle theme"><i class="fas fa-moon"></i></button>
+  <div id="toast-root"></div>
+
+  <div class="card-wrap">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon"><i class="fas fa-university"></i></div>
+        <h1>SmartCampus AI</h1>
+        <p>AI-Powered Academic Portal</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-row" role="tablist">
+        <button class="tab-btn active" id="tab-login"  onclick="switchTab('login')"  role="tab"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+        <button class="tab-btn"        id="tab-signup" onclick="switchTab('signup')" role="tab"><i class="fas fa-user-plus"></i> Register</button>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert hidden" id="alertBox">
+        <i class="fas fa-exclamation-circle" id="alertIcon"></i>
+        <span id="alertText"></span>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="form-panel active" id="panel-login">
+        <form id="loginForm" novalidate autocomplete="on">
+          <div class="field">
+            <i class="fas fa-user field-icon"></i>
+            <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <i class="fas fa-lock field-icon"></i>
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn-submit" id="loginBtn">
+            <span id="loginBtnText"><i class="fas fa-sign-in-alt"></i> Sign In</span>
+            <div class="spinner" id="loginSpinner"></div>
+          </button>
+        </form>
+
+        <div class="divider">Quick Login — Test Account</div>
+        <div class="creds-hint" style="text-align:center;">
+          <div style="margin-bottom:8px;">Click below to automatically fill the student credentials:</div>
+          <div class="creds-grid">
+            <button class="cred-btn" onclick="fillCreds('student1','password')">
+              <i class="fas fa-user-graduate"></i> Student Account
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div class="form-panel" id="panel-signup">
+        <form id="signupForm" novalidate>
+          <div class="field-row">
+            <div class="field">
+              <i class="fas fa-user field-icon"></i>
+              <input type="text" id="regUsername" placeholder="Username" required>
+            </div>
+            <div class="field">
+              <i class="fas fa-id-card field-icon"></i>
+              <input type="text" id="regFullName" placeholder="Full Name" required>
+            </div>
+          </div>
+          <div class="field">
+            <i class="fas fa-envelope field-icon"></i>
+            <input type="email" id="regEmail" placeholder="Email Address" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <i class="fas fa-phone field-icon"></i>
+              <input type="tel" id="regPhone" placeholder="Phone Number">
+            </div>
+            <div class="field">
+              <i class="fas fa-users-cog field-icon"></i>
+              <select id="regRole" required>
+                <option value="STUDENT" selected>Student</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <i class="fas fa-lock field-icon"></i>
+            <input type="password" id="regPassword" placeholder="Password (min. 6 chars)" required>
+          </div>
+          <button type="submit" class="btn-submit" id="signupBtn">
+            <span id="signupBtnText"><i class="fas fa-user-plus"></i> Create Account</span>
+            <div class="spinner" id="signupSpinner"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    function switchTab(tab) {
+      ['login','signup'].forEach(t => {
+        document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+        document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+      });
+      hideAlert();
+    }
+
+    function showAlert(msg, type='error') {
+      const box=document.getElementById('alertBox'), text=document.getElementById('alertText'), icon=document.getElementById('alertIcon');
+      text.textContent=msg; box.className='alert '+type;
+      icon.className=type==='error'?'fas fa-exclamation-circle':'fas fa-check-circle';
+    }
+    function hideAlert() { document.getElementById('alertBox').className='alert hidden'; }
+
+    function setLoading(btnId,spId,txtId,loading) {
+      document.getElementById(btnId).disabled=loading;
+      document.getElementById(spId).style.display=loading?'block':'none';
+      document.getElementById(txtId).style.display=loading?'none':'flex';
+    }
+
+    function fillCreds(u,p) {
+      document.getElementById('loginUsername').value=u;
+      document.getElementById('loginPassword').value=p;
+      document.getElementById('loginUsername').focus();
+    }
+
+    // LOGIN
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); hideAlert();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!username||!password) { showAlert('Please enter your username and password.'); return; }
+
+      setLoading('loginBtn','loginSpinner','loginBtnText',true);
+      await new Promise(r=>setTimeout(r,700)); // simulate network
+
+      const user = login(username, password);
+      if (user) {
+        showToast(`Welcome back, ${user.fullName}! 🎉`, 'success');
+        setTimeout(() => {
+          if (user.role==='ADMIN') window.location.href='admin.html';
+          else window.location.href='dashboard.html';
+        }, 800);
+      } else {
+        showAlert('Invalid username or password. Try the quick-login buttons below.');
+        setLoading('loginBtn','loginSpinner','loginBtnText',false);
+      }
+    });
+
+    // SIGNUP
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); hideAlert();
+      const username = document.getElementById('regUsername').value.trim();
+      const fullName = document.getElementById('regFullName').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const role     = document.getElementById('regRole').value;
+
+      if (!username||!fullName||!email||!password||!role) { showAlert('Please fill in all required fields.'); return; }
+      if (password.length<6) { showAlert('Password must be at least 6 characters.'); return; }
+
+      setLoading('signupBtn','signupSpinner','signupBtnText',true);
+      await new Promise(r=>setTimeout(r,800));
+      setLoading('signupBtn','signupSpinner','signupBtnText',false);
+
+      // Save user to mock data store and localStorage
+      const newUser = {
+        id: Object.keys(MOCK.users).length + 1,
+        username,
+        password,
+        role,
+        fullName,
+        email,
+        phone: document.getElementById('regPhone').value.trim() || '',
+        avatar: fullName.slice(0,2).toUpperCase()
+      };
+      MOCK.users[username] = newUser;
+      try {
+        const customUsers = JSON.parse(localStorage.getItem('sc-custom-users') || '{}');
+        customUsers[username] = newUser;
+        localStorage.setItem('sc-custom-users', JSON.stringify(customUsers));
+      } catch (err) {
+        console.error('Error saving custom user:', err);
+      }
+
+      showToast('Account created! Please sign in.', 'success');
+      document.getElementById('signupForm').reset();
+      setTimeout(()=>switchTab('login'), 900);
+    });
+
+    // Enter key on username → focus password
+    document.getElementById('loginUsername').addEventListener('keydown', e => {
+      if (e.key==='Enter') document.getElementById('loginPassword').focus();
+    });
+  </script>
+</body>
+</html>

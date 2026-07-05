@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library — SmartCampus AI</title>
+  <meta name="description" content="SmartCampus Library — browse the book catalog, borrow books and manage your reading list.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Book cards */
+    .books-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-bottom:32px; }
+    .book-card {
+      padding:22px;border-radius:var(--radius);
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);
+      transition:transform 0.25s,box-shadow 0.25s;position:relative;overflow:hidden;
+    }
+    .book-card::before { content:'';position:absolute;top:0;left:0;right:0;height:4px; }
+    .book-card:hover { transform:translateY(-5px);box-shadow:var(--shadow-md); }
+    .book-card .bk-icon {
+      width:48px;height:48px;border-radius:14px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.2rem;color:#fff;margin-bottom:14px;
+      box-shadow:0 4px 14px rgba(var(--shadow-color),0.3);
+    }
+    .book-card h4 { font-size:0.98rem;font-weight:700;margin-bottom:5px;line-height:1.3; }
+    .book-card .author { font-size:0.82rem;color:var(--text-muted);margin-bottom:10px; }
+    .avail-row { display:flex;align-items:center;justify-content:space-between;margin-top:12px; }
+    .borrow-btn {
+      padding:7px 16px;border-radius:20px;border:none;cursor:pointer;
+      font-size:0.8rem;font-weight:700;
+      background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;
+      transition:opacity 0.2s,transform 0.2s;font-family:inherit;
+    }
+    .borrow-btn:hover:not(:disabled) { opacity:0.85;transform:scale(1.05); }
+    .borrow-btn:disabled { opacity:0.4;cursor:not-allowed;transform:none;background:#9ca3af; }
+
+    /* Table */
+    .status-pill { padding:4px 12px;border-radius:20px;font-size:0.76rem;font-weight:700; }
+    .pill-borrowed { background:rgba(6,182,212,0.12);color:var(--info); }
+    .pill-returned { background:rgba(16,185,129,0.12);color:#10b981; }
+    .pill-overdue  { background:rgba(239,68,68,0.12);color:#ef4444; }
+    .return-btn { padding:5px 13px;border-radius:18px;border:none;cursor:pointer;font-size:0.77rem;font-weight:700;background:linear-gradient(135deg,#10b981,#059669);color:#fff;transition:opacity 0.2s,transform 0.2s;font-family:inherit; }
+    .return-btn:hover { opacity:0.85;transform:scale(1.04); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+      <div><div class="sidebar-brand-text">SmartCampus</div><div class="sidebar-brand-sub">AI Helpdesk</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Navigation</span>
+      <a class="sidebar-link" href="dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <a class="sidebar-link" href="chatbot.html"><i class="fas fa-robot"></i><span>AI Helpdesk</span></a>
+      <a class="sidebar-link" href="library.html"><i class="fas fa-book-open"></i><span>Library</span></a>
+      <a class="sidebar-link" href="placements.html"><i class="fas fa-briefcase"></i><span>Placements</span></a>
+      <a class="sidebar-link" href="events.html"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+        <div id="sidebar-user-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div><div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);"></div></div>
+      </div>
+      <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;"><i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span></button>
+      <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-book-open"></i></div>
+      <div><h1>Library</h1><p>Browse the catalog, borrow books &amp; manage your reading list</p></div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-grid" id="libStats">
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--accent))"><i class="fas fa-books"></i></div><div class="stat-value" id="stTotalBooks">—</div><div class="stat-label">Total Books</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,var(--success),var(--info))"><i class="fas fa-check-circle"></i></div><div class="stat-value" id="stAvailable">—</div><div class="stat-label">Available Copies</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fas fa-bookmark"></i></div><div class="stat-value" id="stBorrowedMe">—</div><div class="stat-label">Borrowed by Me</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#ec4899)"><i class="fas fa-exclamation-circle"></i></div><div class="stat-value" id="stFines">—</div><div class="stat-label">Fines Due</div></div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-row" style="margin-bottom:16px">
+      <div class="search-wrap" style="flex:2">
+        <i class="fas fa-search"></i>
+        <input type="text" id="bookSearch" placeholder="Search title, author or ISBN…" oninput="filterBooks()">
+      </div>
+      <select id="catFilter" class="form-control" style="flex:0;width:auto;min-width:160px;border-radius:50px" onchange="filterBooks()">
+        <option value="">All Categories</option>
+        <option value="Programming">Programming</option>
+        <option value="Computer Science">Computer Science</option>
+        <option value="Software Engineering">Software Engineering</option>
+      </select>
+      <select id="availFilter" class="form-control" style="flex:0;width:auto;min-width:140px;border-radius:50px" onchange="filterBooks()">
+        <option value="">All</option>
+        <option value="available">Available Only</option>
+      </select>
+    </div>
+
+    <!-- Book Catalog -->
+    <div class="section-title"><i class="fas fa-layer-group" style="color:var(--primary)"></i> Book Catalog</div>
+    <div class="books-grid" id="booksGrid">
+      <div class="empty-state" style="grid-column:1/-1"><i class="fas fa-spinner fa-spin"></i><p>Loading books…</p></div>
+    </div>
+
+    <!-- Borrowed Books -->
+    <div class="section-title"><i class="fas fa-bookmark" style="color:var(--primary)"></i> My Borrowed Books</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Book Title</th><th>Author</th><th>Borrowed</th><th>Due Date</th><th>Status</th><th>Fine (₹)</th><th style="text-align:center">Action</th>
+          </tr>
+        </thead>
+        <tbody id="borrowedBody">
+          <tr><td colspan="7" style="text-align:center;padding:28px;opacity:0.5">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+  checkAuth();
+  let allBooks = [...MOCK.books];
+  let borrowed = [...MOCK.borrowedBooks];
+
+  function loadLibrary() {
+    // Stats
+    const totalBooks    = allBooks.reduce((s,b)=>s+b.totalCopies,0);
+    const availBooks    = allBooks.reduce((s,b)=>s+b.availableCopies,0);
+    const borrowedCount = borrowed.filter(b=>b.status!=='RETURNED').length;
+    const fines         = borrowed.reduce((s,b)=>s+b.fine,0);
+
+    document.getElementById('stTotalBooks').textContent  = totalBooks;
+    document.getElementById('stAvailable').textContent   = availBooks;
+    document.getElementById('stBorrowedMe').textContent  = borrowedCount;
+    document.getElementById('stFines').textContent       = '₹' + fines;
+
+    renderBooks(allBooks);
+    renderBorrowed();
+  }
+
+  function renderBooks(books) {
+    const grid = document.getElementById('booksGrid');
+    if (!books.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-book"></i><p>No books found matching your search.</p></div>`;
+      return;
+    }
+    grid.innerHTML = books.map(b => {
+      const avail = b.availableCopies;
+      const badgeCls = avail===0?'danger':avail<=2?'warning':'success';
+      const badgeTxt = avail===0?'Unavailable':avail<=2?`Only ${avail} left`:`${avail} Available`;
+      return `
+        <div class="book-card">
+          <div class="bk-icon"><i class="fas fa-book"></i></div>
+          <h4>${b.title}</h4>
+          <div class="author"><i class="fas fa-pen-nib" style="opacity:0.5;margin-right:5px"></i>${b.author}</div>
+          <span class="badge badge-primary" style="font-size:0.72rem">${b.category}</span>
+          <div class="avail-row" style="margin-top:12px">
+            <span class="badge badge-${badgeCls}">${badgeTxt}</span>
+            <button class="borrow-btn" ${avail===0?'disabled':''} onclick="borrowBook(${b.id},'${b.title.replace(/'/g,"\\'")}')">
+              <i class="fas fa-hand-holding"></i> ${avail===0?'Unavailable':'Borrow'}
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderBorrowed() {
+    const tbody = document.getElementById('borrowedBody');
+    if (!borrowed.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-bookmark"></i><p>No borrowed books.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = borrowed.map(b => {
+      const pillCls = b.status==='RETURNED'?'pill-returned':b.status==='OVERDUE'?'pill-overdue':'pill-borrowed';
+      const action  = b.status!=='RETURNED'
+        ? `<button class="return-btn" onclick="returnBook(${b.id},'${b.bookTitle.replace(/'/g,"\\'")}')"><i class="fas fa-undo"></i> Return</button>`
+        : `<span style="color:var(--text-muted);font-size:0.82rem">Returned</span>`;
+      return `
+        <tr>
+          <td><strong>${b.bookTitle}</strong></td>
+          <td>${b.author}</td>
+          <td>${b.borrowDate}</td>
+          <td>${b.dueDate}</td>
+          <td><span class="status-pill ${pillCls}">${b.status}</span></td>
+          <td>${b.fine?'₹'+b.fine.toFixed(2):'—'}</td>
+          <td style="text-align:center">${action}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function filterBooks() {
+    const q   = document.getElementById('bookSearch').value.toLowerCase();
+    const cat = document.getElementById('catFilter').value;
+    const avl = document.getElementById('availFilter').value;
+    const filtered = allBooks.filter(b =>
+      (!q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.isbn.includes(q)) &&
+      (!cat || b.category === cat) &&
+      (avl !== 'available' || b.availableCopies > 0)
+    );
+    renderBooks(filtered);
+  }
+
+  function borrowBook(id, title) {
+    if (!confirm(`Borrow "${title}"?`)) return;
+    const book = allBooks.find(b=>b.id===id);
+    if (!book || book.availableCopies===0) { showToast('Book not available.','error'); return; }
+    book.availableCopies--;
+
+    const today = new Date();
+    const due   = new Date(today); due.setDate(due.getDate()+14);
+    const fmt   = d => d.toISOString().split('T')[0];
+
+    borrowed.unshift({ id:Date.now(), bookTitle:title, author:book.author, borrowDate:fmt(today), dueDate:fmt(due), status:'BORROWED', fine:0 });
+
+    // Update dashboard activity
+    localStorage.setItem('sc-user', localStorage.getItem('sc-user'));
+    MOCK.dashboard.lastBorrowedBook = { title, dueDate:fmt(due) };
+
+    showToast(`📚 "${title}" borrowed! Due: ${fmt(due)}`, 'success');
+    loadLibrary();
+  }
+
+  function returnBook(borrowId, title) {
+    if (!confirm(`Return "${title}"?`)) return;
+    const record = borrowed.find(b=>b.id===borrowId);
+    if (record) {
+      record.status = 'RETURNED';
+      const book = allBooks.find(b=>b.title===title);
+      if (book) book.availableCopies++;
+    }
+    showToast(`✅ "${title}" returned successfully!`, 'success');
+    loadLibrary();
+  }
+
+  loadLibrary();
+</script>
+</body>
+</html>

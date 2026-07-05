@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — SmartCampus AI</title>
+  <meta name="description" content="SmartCampus Events — browse and register for hackathons, cultural fests, workshops and sports events.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Two column layout */
+    .events-layout { display:grid;grid-template-columns:1fr 310px;gap:24px; }
+    @media(max-width:900px){.events-layout{grid-template-columns:1fr;}}
+
+    /* Event cards */
+    .events-list { display:flex;flex-direction:column;gap:16px; }
+    .event-card {
+      display:flex;gap:18px;padding:22px;border-radius:var(--radius);
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);
+      transition:transform 0.22s,box-shadow 0.22s;position:relative;overflow:hidden;
+    }
+    .event-card:hover { transform:translateX(5px);box-shadow:var(--shadow-md); }
+    .event-side-bar { position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:var(--radius) 0 0 var(--radius); }
+    .event-icon-wrap { width:56px;height:56px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff; }
+    .event-body { flex:1;min-width:0; }
+    .event-body h3 { margin-bottom:5px;font-size:1rem; }
+    .event-desc { margin-bottom:10px;font-size:0.85rem;color:var(--text-2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+    .event-meta { display:flex;gap:16px;flex-wrap:wrap; }
+    .meta-chip { display:flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--text-muted); }
+    .event-actions { display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;flex-shrink:0;min-width:100px; }
+    .days-badge { font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border); }
+    .reg-btn {
+      padding:9px 18px;border-radius:25px;border:none;cursor:pointer;
+      font-weight:700;font-size:0.82rem;color:#fff;transition:opacity 0.2s,transform 0.15s;
+      white-space:nowrap;font-family:inherit;
+    }
+    .reg-btn:hover:not(:disabled) { opacity:0.85;transform:scale(1.05); }
+    .reg-btn:disabled { opacity:0.4;cursor:not-allowed;transform:none; }
+
+    /* Quick view sidebar */
+    .quick-view {
+      border-radius:var(--radius);padding:22px;
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);
+      position:sticky;top:24px;align-self:start;
+    }
+    .quick-view h3 { font-size:0.95rem;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px; }
+    .upcoming-item { display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border); }
+    .upcoming-item:last-child { border-bottom:none; }
+    .upcoming-date { width:44px;height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;flex-shrink:0; }
+    .upcoming-date .day { font-size:1.1rem;line-height:1; }
+    .upcoming-date .mon { font-size:0.62rem;opacity:0.9; }
+    .upcoming-info h4 { margin:0 0 3px;font-size:0.86rem; }
+    .upcoming-info p  { margin:0;font-size:0.76rem;color:var(--text-muted); }
+
+    /* Form row */
+    .form-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-university"></i></div>
+      <div><div class="sidebar-brand-text">SmartCampus</div><div class="sidebar-brand-sub">AI Helpdesk</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Navigation</span>
+      <a class="sidebar-link" href="dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <a class="sidebar-link" href="chatbot.html"><i class="fas fa-robot"></i><span>AI Helpdesk</span></a>
+      <a class="sidebar-link" href="library.html"><i class="fas fa-book-open"></i><span>Library</span></a>
+      <a class="sidebar-link" href="placements.html"><i class="fas fa-briefcase"></i><span>Placements</span></a>
+      <a class="sidebar-link" href="events.html"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:8px;">
+        <div id="sidebar-user-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div id="sidebar-user-name" style="font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div><div id="sidebar-user-role" style="font-size:0.7rem;color:var(--text-muted);"></div></div>
+      </div>
+      <button class="sidebar-link theme-toggle-btn" id="theme-toggle" style="width:100%;border:none;cursor:pointer;background:none;text-align:left;"><i class="fas fa-moon"></i><span class="theme-label">Dark Mode</span></button>
+      <a class="sidebar-link" href="#" onclick="logout();return false;" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fas fa-calendar-alt"></i></div>
+      <div><h1>Campus Events</h1><p>Stay updated on academic, cultural &amp; technical events</p></div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="filter-chips">
+      <button class="chip active" onclick="filterEvents('ALL',this)">🎯 All Events</button>
+      <button class="chip" onclick="filterEvents('TECHNICAL',this)">💻 Technical</button>
+      <button class="chip" onclick="filterEvents('PLACEMENT',this)">💼 Placement</button>
+      <button class="chip" onclick="filterEvents('CULTURAL',this)">🎵 Cultural</button>
+      <button class="chip" onclick="filterEvents('WORKSHOP',this)">🔧 Workshop</button>
+      <button class="chip" onclick="filterEvents('SPORTS',this)">🏆 Sports</button>
+    </div>
+
+    <div class="events-layout">
+      <!-- Event list -->
+      <div>
+        <div class="section-title"><i class="fas fa-list-ul" style="color:#f59e0b"></i> All Events</div>
+        <div class="events-list" id="eventsList">
+          <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading events…</p></div>
+        </div>
+      </div>
+
+      <!-- Quick View -->
+      <div>
+        <div class="section-title"><i class="fas fa-calendar-check" style="color:#f59e0b"></i> Quick View</div>
+        <div class="quick-view" id="quickView">
+          <h3><i class="fas fa-clock" style="color:#f59e0b"></i> Upcoming Events</h3>
+          <div id="quickViewItems"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Event Register Modal -->
+<div class="modal-overlay" id="evtModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('evtModal')"><i class="fas fa-times"></i></button>
+    <div id="evtModalContent"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+  checkAuth();
+  let allEvents = [...MOCK.events];
+
+  const styleRoot = getComputedStyle(document.documentElement);
+  const primaryVal = styleRoot.getPropertyValue('--primary').trim() || '#ec4899';
+  const accentVal = styleRoot.getPropertyValue('--accent').trim() || '#8b5cf6';
+  const infoVal = styleRoot.getPropertyValue('--info').trim() || '#06b6d4';
+
+  const catColors = {
+    TECHNICAL:primaryVal, PLACEMENT:infoVal, CULTURAL:'#f59e0b',
+    WORKSHOP:'#10b981', SPORTS:'#ef4444', DEFAULT:accentVal
+  };
+
+  function renderEvents(events) {
+    const list = document.getElementById('eventsList');
+    if (!events.length) {
+      list.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><p>No events in this category.</p></div>`;
+      return;
+    }
+    list.innerHTML = events.map(e => {
+      const color = catColors[e.category] || catColors.DEFAULT;
+      const { label:days, color:dCol } = daysUntil(e.eventDate);
+      const isPast = days === 'Past';
+      const btnStyle = `background:linear-gradient(135deg,${color},${accentVal})`;
+      const btn = isPast
+        ? `<button class="reg-btn" disabled style="${btnStyle}"><i class="fas fa-lock"></i> Ended</button>`
+        : `<button class="reg-btn" style="${btnStyle}" onclick="openEvtModal(${e.id})"><i class="fas fa-user-plus"></i> Register</button>`;
+
+      return `
+        <div class="event-card">
+          <div class="event-side-bar" style="background:${color}"></div>
+          <div class="event-icon-wrap" style="background:${color};box-shadow:0 4px 14px ${color}55"><i class="fas ${e.icon}"></i></div>
+          <div class="event-body">
+            <h3>${e.title}</h3>
+            <p class="event-desc">${e.description}</p>
+            <div class="event-meta">
+              <div class="meta-chip"><i class="fas fa-calendar"></i> ${fmtDateTime(e.eventDate)}</div>
+              <div class="meta-chip"><i class="fas fa-map-marker-alt"></i> ${e.location}</div>
+              <div class="meta-chip"><i class="fas fa-user-tie"></i> ${e.organizer}</div>
+            </div>
+          </div>
+          <div class="event-actions">
+            <span class="badge" style="background:${color}22;color:${color}">${e.category}</span>
+            <span class="days-badge" style="color:${dCol}">${days}</span>
+            ${btn}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderQuickView(events) {
+    const upcoming = [...events]
+      .filter(e => new Date(e.eventDate) >= new Date())
+      .sort((a,b) => new Date(a.eventDate) - new Date(b.eventDate))
+      .slice(0,5);
+
+    const container = document.getElementById('quickViewItems');
+    if (!upcoming.length) { container.innerHTML = `<p style="text-align:center;opacity:0.5">No upcoming events</p>`; return; }
+
+    container.innerHTML = upcoming.map(e => {
+      const d     = new Date(e.eventDate);
+      const color = catColors[e.category] || catColors.DEFAULT;
+      return `
+        <div class="upcoming-item">
+          <div class="upcoming-date" style="background:${color}">
+            <span class="day">${d.getDate()}</span>
+            <span class="mon">${d.toLocaleString('en-IN',{month:'short'})}</span>
+          </div>
+          <div class="upcoming-info">
+            <h4>${e.title}</h4>
+            <p><i class="fas fa-map-marker-alt"></i> ${e.location}</p>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function filterEvents(cat, btn) {
+    document.querySelectorAll('.filter-chips .chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    renderEvents(cat==='ALL' ? allEvents : allEvents.filter(e=>e.category===cat));
+  }
+
+  function openEvtModal(id) {
+    const e = allEvents.find(x=>x.id===id);
+    if (!e) return;
+    const color = catColors[e.category] || catColors.DEFAULT;
+    const user  = JSON.parse(localStorage.getItem('sc-user')||'{}');
+
+    document.getElementById('evtModalContent').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <div style="width:50px;height:50px;border-radius:14px;background:${color};display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;flex-shrink:0"><i class="fas ${e.icon}"></i></div>
+        <div><h2 style="margin:0;font-size:1.1rem">${e.title}</h2><p style="margin:3px 0 0;font-size:0.82rem;color:var(--text-muted)">${e.category} • ${e.organizer}</p></div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:14px">
+        <div class="form-group"><label><i class="fas fa-calendar"></i> Date</label><input class="form-control" value="${fmtDateTime(e.eventDate)}" readonly style="opacity:0.7"></div>
+        <div class="form-group"><label><i class="fas fa-map-marker-alt"></i> Venue</label><input class="form-control" value="${e.location}" readonly style="opacity:0.7"></div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+      <div class="form-row-2">
+        <div class="form-group"><label>Full Name *</label><input class="form-control" id="evName" value="${user.fullName||''}" placeholder="Your full name" required></div>
+        <div class="form-group"><label>Student ID *</label><input class="form-control" id="evSid" placeholder="e.g. CS2021001" required></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Email *</label><input class="form-control" id="evEmail" type="email" value="${user.email||''}" required></div>
+        <div class="form-group"><label>Phone</label><input class="form-control" id="evPhone" type="tel" value="${user.phone||''}" placeholder="10-digit number"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Department *</label>
+          <select class="form-control" id="evDept" required>
+            <option value="">Select</option>
+            <option selected>Computer Science &amp; Engineering</option>
+            <option>Information Technology</option>
+            <option>Electronics &amp; Communication</option>
+            <option>Electrical Engineering</option>
+            <option>Mechanical Engineering</option>
+            <option>MBA</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Year of Study *</label>
+          <select class="form-control" id="evYear" required>
+            <option value="">Select</option>
+            <option>1st Year</option><option>2nd Year</option>
+            <option selected>3rd Year</option><option>4th Year</option><option>PG / MBA</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" style="margin-top:8px;background:linear-gradient(135deg,${color},${accentVal})" onclick="submitEvtReg(${e.id})">
+        <i class="fas fa-user-plus"></i> Confirm Registration
+      </button>`;
+    openModal('evtModal');
+  }
+
+  function submitEvtReg(evtId) {
+    const name = document.getElementById('evName').value.trim();
+    const sid  = document.getElementById('evSid').value.trim();
+    const email= document.getElementById('evEmail').value.trim();
+    const dept = document.getElementById('evDept').value;
+    const year = document.getElementById('evYear').value;
+    if (!name||!sid||!email||!dept||!year) { showToast('Please fill all required fields.','warning'); return; }
+
+    const e   = allEvents.find(x=>x.id===evtId);
+    const ref = genRef('EV');
+    localStorage.setItem('sc-lastEvent', JSON.stringify({ title:e.title, referenceId:ref, date:fmtDate(e.eventDate), location:e.location }));
+
+    document.getElementById('evtModalContent').innerHTML = `
+      <div class="success-card">
+        <div class="tick"><i class="fas fa-check-circle"></i></div>
+        <h3>You're Registered! 🎉</h3>
+        <p>Your spot for <strong>${e.title}</strong> has been confirmed.</p>
+        <div class="ref-badge"><i class="fas fa-qrcode"></i> ${ref}</div>
+        <div style="display:flex;gap:16px;justify-content:center;margin:14px 0;flex-wrap:wrap">
+          <div style="font-size:0.85rem;color:var(--text-2)"><i class="fas fa-calendar" style="margin-right:5px"></i>${fmtDate(e.eventDate)}</div>
+          <div style="font-size:0.85rem;color:var(--text-2)"><i class="fas fa-map-marker-alt" style="margin-right:5px"></i>${e.location}</div>
+        </div>
+        <p style="font-size:0.82rem">Save your reference ID — you may need it at the venue check-in.</p>
+        <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="closeModal('evtModal')"><i class="fas fa-check"></i> Done</button>
+      </div>`;
+    showToast('Registered successfully!','success');
+  }
+
+  renderEvents(allEvents);
+  renderQuickView(allEvents);
+</script>
+</body>
+</html>
